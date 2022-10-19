@@ -1,4 +1,5 @@
 import "@dataesr/react-dsfr";
+import React from "react";
 import { Component } from "react";
 import FileLine from "./FileLine";
 
@@ -12,20 +13,47 @@ export default class FileList extends Component<any, any>{
     }
 
     componentDidMount() {
+        this.updateItems()
+    }
+
+    setLoad(value : boolean){
+        this.setState({isLoaded : value})
+    }
+
+    updateItems(){
         fetch(
-            "http://127.0.0.1:8080/api/files")
+                "/api/files",
+                {method : "GET"}
+            )
             .then((res) => res.json())
             .then((json) => {
                 this.setState({
                     items: json,
-                    isLoaded : ! this.state.isLoaded
+                    isLoaded : true
                 });
-            })
-        }
+            }
+        )
+    }
 
     setFileList(){
-        let fileList = this.state.items.map((file : any) => (<FileLine uuid={file.uuid} name={file.originalName} created={file.createdAt} />))
+        let fileList = this.state.items.map((file : any) => (<FileLine key={file.uuid} uuid={file.uuid} name={file.originalName} created={file.createdAt} loadFn = {this.setLoad.bind(this)} updateItems={this.updateItems.bind(this)} />))
         return fileList
+    }
+
+    handleClick = () => {
+        document.getElementById("fileUp")?.click()
+    }
+
+    handleChange = (Event : { target : any; }) => {
+        let FD = new FormData(Event.target);
+        fetch("/api/fileUpload", {
+            headers: new Headers({'content-type': 'multipart/form-data'}),
+            method : "POST",
+            body : FD
+            
+        })
+        .then(() => this.setLoad(false))
+        .then(() => this.updateItems())
     }
 
     render(){
@@ -56,9 +84,18 @@ export default class FileList extends Component<any, any>{
                         </div>
                     </header>
                     <div className="div-second">
-                    <button className="fr-btn fr-btn--lg fr-btn--icon-left">
+                    <button 
+                        className="fr-btn fr-btn--lg fr-btn--icon-left"
+                        onClick={this.handleClick}
+                    >
                         Ajouter un fichier
                     </button>
+                    <input
+                        id="fileUp"
+                        type="file"
+                        onChange={this.handleChange}
+                        style={{display: 'none'}}
+                    />
                         <div className="div-scroll">
                             { this.state.isLoaded ? this.setFileList() : "Veuillez patienter..."}
                         </div>
