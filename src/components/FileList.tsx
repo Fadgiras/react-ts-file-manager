@@ -45,9 +45,11 @@ export default class FileList extends Component<any, any>{
     }
 
     handleChange = (Event : { target : any; }) => {
-        let FD = new FormData(Event.target);
+        let FD = new FormData();
+        
+        FD.append('file', Event.target.files[0])
         fetch("/api/fileUpload", {
-            headers: new Headers({'content-type': 'multipart/form-data'}),
+            // Do not set the content type here : Browser will do it on its own 
             method : "POST",
             body : FD
             
